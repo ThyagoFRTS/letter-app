@@ -1,4 +1,10 @@
-from numpy import ndarray, where
+from numpy import ndarray, where, sum, max as np_max
+from cv2 import (
+    getStructuringElement,
+    morphologyEx,
+    MORPH_RECT,
+    MORPH_OPEN
+)
 
 def find_table_template(image: ndarray, gray_tolerance: int = 200, margin: int = 1):
     """
@@ -29,19 +35,19 @@ def find_table_template(image: ndarray, gray_tolerance: int = 200, margin: int =
     return (y_top, y_bottom), (x_left, x_right)
 
 def detect_table_lines(binary_img, scale=15):
-    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (binary_img.shape[1] // scale, 1))
-    v_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (1, binary_img.shape[0] // scale))
+    h_kernel = getStructuringElement(MORPH_RECT, (binary_img.shape[1] // scale, 1))
+    v_kernel = getStructuringElement(MORPH_RECT, (1, binary_img.shape[0] // scale))
 
-    horizontal = cv2.morphologyEx(binary_img, cv2.MORPH_OPEN, h_kernel)
-    vertical = cv2.morphologyEx(binary_img, cv2.MORPH_OPEN, v_kernel)
+    horizontal = morphologyEx(binary_img, MORPH_OPEN, h_kernel)
+    vertical = morphologyEx(binary_img, MORPH_OPEN, v_kernel)
 
     # Combina tudo
     return horizontal, vertical
 
 def extract_line_positions(line_img, axis=0, min_gap=5):
-    projection = np.sum(line_img, axis=axis)
-    threshold = np.max(projection) * 0.5
-    coords = np.where(projection > threshold)[0]
+    projection = sum(line_img, axis=axis)
+    threshold = np_max(projection) * 0.5
+    coords = where(projection > threshold)[0]
 
     # Junta linhas próximas
     merged = []
